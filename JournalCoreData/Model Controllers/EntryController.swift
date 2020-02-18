@@ -9,10 +9,19 @@
 import Foundation
 import CoreData
 
-#error("Change this value to your own firebase database! (and then delete this line)")
-let baseURL = URL(string: "https://journal-syncing.firebaseio.com/")!
+//#error("Change this value to your own firebase database! (and then delete this line)")
+
+
+
 
 class EntryController {
+    
+    let baseURL = URL(string: "https://ios13-journaldebugging.firebaseio.com/")!
+    
+    // Bug: Needed to initalize the fecth from server method
+    init(){
+        fetchEntriesFromServer()
+    }
     
     func createEntry(with title: String, bodyText: String, mood: String) {
         
@@ -20,7 +29,7 @@ class EntryController {
         
         put(entry: entry)
         
-        saveToPersistentStore()
+        save()
     }
     
     func update(entry: Entry, title: String, bodyText: String, mood: String) {
@@ -32,22 +41,30 @@ class EntryController {
         
         put(entry: entry)
         
-        saveToPersistentStore()
+        save()
     }
     
     func delete(entry: Entry) {
         
         CoreDataStack.shared.mainContext.delete(entry)
         deleteEntryFromServer(entry: entry)
-        saveToPersistentStore()
+        save()
     }
     
     private func put(entry: Entry, completion: @escaping ((Error?) -> Void) = { _ in }) {
         
         let identifier = entry.identifier ?? UUID().uuidString
-        let requestURL = baseURL.appendingPathComponent(identifier).appendingPathComponent("json")
+        let requestURL = baseURL.appendingPathComponent(identifier).appendingPathExtension("json")
         var request = URLRequest(url: requestURL)
         request.httpMethod = "PUT"
+        
+        
+        // Bug: Configured put for Model Representation
+//        guard let entryRepresentation = entry.entryRepresentation else{
+//                   NSLog("Error")
+//                   completion(nil)
+//                   return
+//               }
         
         do {
             request.httpBody = try JSONEncoder().encode(entry)
@@ -109,7 +126,10 @@ class EntryController {
                 return
             }
 
-            let moc = CoreDataStack.shared.mainContext
+            //Adding new Background Context
+            let moc = CoreDataStack.shared.container.newBackgroundContext()
+            
+         
             
             do {
                 let entryReps = try JSONDecoder().decode([String: EntryRepresentation].self, from: data).map({$0.value})
@@ -137,7 +157,7 @@ class EntryController {
         guard let identifier = identifier else { return nil }
         
         let fetchRequest: NSFetchRequest<Entry> = Entry.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "identfier == %@", identifier)
+        fetchRequest.predicate = NSPredicate(format: "identifier == %@", identifier)
         
         var result: Entry? = nil
         do {
@@ -171,11 +191,15 @@ class EntryController {
         entry.identifier = entryRep.identifier
     }
     
-    func saveToPersistentStore() {        
-        do {
-            try CoreDataStack.shared.mainContext.save()
-        } catch {
-            NSLog("Error saving managed object context: \(error)")
+    func save(context: NSManagedObjectContext = CoreDataStack.shared.mainContext) {
+        
+        context.performAndWait {
+            do {
+                try CoreDataStack.shared.mainContext.save()
+            } catch {
+                NSLog("Error saving managed object context: \(error)")
+            }
+
         }
     }
 }

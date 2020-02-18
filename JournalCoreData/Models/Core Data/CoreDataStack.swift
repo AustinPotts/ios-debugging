@@ -25,5 +25,7 @@ class CoreDataStack {
         return container
     }()
     
+    // May need to add Background Contexts
+    
     var mainContext: NSManagedObjectContext { return container.viewContext }
 }

@@ -11,7 +11,20 @@ import CoreData
 
 extension Entry {
     
-    convenience init(title: String,
+    
+    // Bug #2: Representation needed to be initialized through computed property
+//    var entryRepresentation: EntryRepresentation? {
+//        guard let title = title,
+//            let mood = mood,
+//            let bodyText = bodyText,
+//            let timestamp = timestamp,
+//            let identifier = identifier else{return nil}
+//        return EntryRepresentation(title: title, bodyText: bodyText, mood: mood, timestamp: timestamp, identifier: identifier)
+//    }
+
+    
+    // Bug #4: Added discarable result
+   @discardableResult convenience init(title: String,
                      bodyText: String,
                      timestamp: Date = Date(),
                      mood: String,

@@ -41,6 +41,10 @@ class EntryDetailViewController: UIViewController {
     }
     
     private func updateViews() {
+        
+        // Bug #7 Added isViewLoaded guard
+        guard isViewLoaded else {return}
+        
         guard let entry = entry else {
                 title = "Create Entry"
                 return
@@ -66,12 +70,8 @@ class EntryDetailViewController: UIViewController {
         moodSegmentedControl.selectedSegmentIndex = segmentIndex
     }
     
-    var entry: Entry? {
-        didSet {
-            updateViews()
-        }
-    }
-    
+    //Bug #6: Removed didSet on Entry
+    var entry: Entry?
     var entryController: EntryController?
     
     @IBOutlet weak var moodSegmentedControl: UISegmentedControl!
